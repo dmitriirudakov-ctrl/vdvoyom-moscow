@@ -860,7 +860,8 @@ export default function App() {
                           ? "Только для вас"
                           : "Для вас двоих"}
                       </span>
-                      {s.owner_id === profile.id && (
+                      {(s.owner_id === profile.id ||
+                        s.visibility === "shared") && (
                         <button
                           className="secondary"
                           disabled={busy}
@@ -882,10 +883,6 @@ export default function App() {
                           <Trash2 size={16} /> Удалить
                         </button>
                       )}
-                      {s.owner_id !== profile.id &&
-                        s.visibility === "shared" && (
-                          <span className="hint">Удалить может автор</span>
-                        )}
                     </div>
                     <span className="date-label">
                       {prettyDate(s.payload.date)}

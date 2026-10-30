@@ -30,6 +30,15 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../supabase/migrations/202610300002_shared_delete.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.exec(`insert into auth.users values ('${A}'),('${B}'),('${C}');
     insert into public.couples(id) values ('${couple}'),('${other}');
     insert into public.profiles values ('${A}','${couple}','A'),('${B}','${couple}','B'),('${C}','${other}','C');
@@ -162,6 +171,24 @@ describe("Database authorization under real PostgreSQL RLS", () => {
         `insert into public.place_feedback values('${couple}','park2','blocked')`,
       ),
     ).rejects.toThrow();
+  });
+  it("allows a partner to delete a shared save without exposing it to outsiders", async () => {
+    await asUser(C);
+    expect(
+      (
+        await db.query(
+          `delete from public.saves where id='${shared}' returning id`,
+        )
+      ).rows,
+    ).toHaveLength(0);
+    await asUser(B);
+    expect(
+      (
+        await db.query(
+          `delete from public.saves where id='${shared}' returning id`,
+        )
+      ).rows,
+    ).toHaveLength(1);
   });
   it("denies anonymous reads and client access to the import function", async () => {
     await db.exec("reset role; set role anon;");
