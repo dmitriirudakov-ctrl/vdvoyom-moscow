@@ -1,0 +1,6 @@
+project_id = "vdvoyom-moscow"
+
+[functions.import-events]
+verify_jwt = false
+
+# import-events is protected by a separate server-only random secret, checked before any work.

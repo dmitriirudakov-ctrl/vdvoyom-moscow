@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#214e41" />
+    <meta
+      name="description"
+      content="Идеи для ваших выходных вдвоём в Москве. Прогулки, маленькие открытия и планы на день."
+    />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>Вдвоём — ваши выходные в Москве</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      if (location.protocol === "file:") {
+        document.getElementById("root").innerHTML = `
+          <main style="max-width:520px;margin:12vh auto;padding:28px;font:16px/1.7 -apple-system,BlinkMacSystemFont,sans-serif;color:#214e41">
+            <h1 style="font-size:30px;line-height:1.2">Откроем «Вдвоём»</h1>
+            <p>Вы открыли файл приложения с диска. Для работы нужен локальный сервер.</p>
+            <p>Запустите <strong>START.command</strong> в папке проекта, затем откройте:</p>
+            <a href="http://127.0.0.1:5173/" style="display:inline-block;padding:12px 18px;background:#214e41;color:#fff9e8;border-radius:8px;text-decoration:none">Наше приложение</a>
+            <p style="font-size:13px;color:#667b62">После публикации достаточно будет обычной ссылки в интернете.</p>
+          </main>`;
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

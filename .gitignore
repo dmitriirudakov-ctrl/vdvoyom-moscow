@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.supabase/
+.DS_Store
+*.local
+*.tsbuildinfo
+test-results/
+output/
+# Personal planning notes stay on the owner's machine, outside the public code repository.
+WEEKEND_APP_PLAN.md
