@@ -68,6 +68,7 @@ describe("Plans respect constraints", () => {
         expect(plan.items.length).toBeGreaterThanOrEqual(3);
         expect(plan.items.some((i) => i.place.category === "cafe")).toBe(true);
         expect(plan.total).toBeLessThanOrEqual(budget);
+        expect(plan.total).toBeGreaterThanOrEqual(budget - 1000);
         expect(plan.total).toBe(
           plan.transport +
             plan.items.reduce((s, i) => s + i.place.price! * 2, 0),
@@ -100,7 +101,7 @@ describe("Plans respect constraints", () => {
     ).toBe(true);
     expect(() =>
       makePlan(catalog, { ...base, budget: 500 }, emptyData(), rng(2)),
-    ).toThrow("Не хватает мест");
+    ).toThrow("Не удалось собрать день");
   });
   it("does not propose unknown or starting prices as a complete budget", () => {
     for (const priceKind of ["unknown", "from"] as const)
@@ -108,8 +109,50 @@ describe("Plans respect constraints", () => {
         eligible({ ...catalog[0], price: 0, priceKind }, base, emptyData()),
       ).toBe(false);
   });
+  it("respects the lower and upper bounds for individual ideas and replacements", () => {
+    const cheap = { ...catalog[0], price: 0 },
+      suitable = {
+        ...catalog[0],
+        id: "suitable",
+        price: 1400,
+        priceKind: "estimate" as const,
+      };
+    const settings = { ...base, mode: "idea" as const, budget: 4000 };
+    const plan = makePlan([cheap, suitable], settings, emptyData(), rng(2));
+    expect(plan.items[0].place.id).toBe("suitable");
+    expect(plan.total).toBeGreaterThanOrEqual(3000);
+    expect(plan.total).toBeLessThanOrEqual(4000);
+    expect(() => makePlan([cheap], settings, emptyData())).toThrow(
+      "от 3000 до 4000",
+    );
+    expect(() =>
+      replaceItem(
+        plan,
+        0,
+        [{ ...cheap, id: "replacement" }],
+        settings,
+        emptyData(),
+      ),
+    ).toThrow("Замены");
+  });
+  it("varies restaurants instead of always selecting the closest branch", () => {
+    const cafes = new Set<string>();
+    for (let seed = 1; seed <= 80; seed++) {
+      const plan = makePlan(
+        catalog,
+        { ...base, budget: 4000 },
+        emptyData(),
+        rng(seed),
+      );
+      cafes.add(
+        plan.items.find((item) => item.place.category === "cafe")!.place.id,
+      );
+    }
+    expect(cafes.size).toBeGreaterThanOrEqual(4);
+    expect([...cafes].some((id) => !id.startsWith("grabli"))).toBe(true);
+  });
   it("does not return blocked, prohibited, expired or unliked visited places", () => {
-    const p = catalog[0],
+    const p = { ...catalog[0], price: 800, priceKind: "estimate" as const },
       plan = makePlan([p], { ...base, mode: "idea" }, emptyData());
     const data: Data = {
       saves: [],
@@ -160,6 +203,8 @@ describe("Plans respect constraints", () => {
   it("respects exact event sessions, not the gap between their dates", () => {
     const event: Place = {
       ...catalog[0],
+      price: 800,
+      priceKind: "estimate",
       sessions: ["2026-10-31T16:00:00+03:00", "2026-11-02T16:00:00+03:00"],
     };
     expect(
@@ -197,7 +242,7 @@ describe("Plans respect constraints", () => {
     ).toThrow("Замены");
   });
   it("rarely repeats liked places instead of letting them dominate new suggestions", () => {
-    const p = catalog[0],
+    const p = { ...catalog[0], price: 800, priceKind: "estimate" as const },
       second = { ...p, id: "new-place" },
       seen = makePlan([p], { ...base, mode: "idea" }, emptyData());
     const data: Data = {

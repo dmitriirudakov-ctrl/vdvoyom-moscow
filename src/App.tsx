@@ -401,6 +401,11 @@ export default function App() {
           <span className="top-tag">
             <Users size={15} /> Только для вас двоих
           </span>
+          {store.cloud && (
+            <button className="secondary" onClick={() => void logout()}>
+              <LogOut size={16} /> Выйти
+            </button>
+          )}
         </header>
         {!store.cloud && (
           <div className="demo-banner">
@@ -515,9 +520,10 @@ export default function App() {
                     ))}
                   </div>
                   <small>
-                    {settings.budget === 6000
-                      ? "Особенный день · расширенный бюджет"
-                      : "Включая еду и резерв на транспорт"}
+                    Ищем варианты от {rubles(settings.budget - 1000)} до{" "}
+                    {rubles(settings.budget)} на двоих, включая резерв на
+                    транспорт{settings.mode === "day" ? " и еду" : ""}. Цены
+                    могут измениться.
                   </small>
                 </div>
               </div>
@@ -856,13 +862,15 @@ export default function App() {
                       </span>
                       {s.owner_id === profile.id && (
                         <button
-                          className="icon-button"
+                          className="secondary"
                           disabled={busy}
                           aria-label={`Удалить сохранение ${s.payload.title}`}
                           onClick={() => {
                             if (
                               window.confirm(
-                                "Удалить это сохранение? История посещений останется.",
+                                s.visibility === "shared"
+                                  ? "Удалить общий план у обоих? История посещений останется."
+                                  : "Удалить это сохранение? История посещений останется.",
                               )
                             )
                               void act(
@@ -871,9 +879,13 @@ export default function App() {
                               );
                           }}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} /> Удалить
                         </button>
                       )}
+                      {s.owner_id !== profile.id &&
+                        s.visibility === "shared" && (
+                          <span className="hint">Удалить может автор</span>
+                        )}
                     </div>
                     <span className="date-label">
                       {prettyDate(s.payload.date)}
@@ -1075,10 +1087,15 @@ export default function App() {
                   </div>
                 </>
               ) : (
-                <p className="hint">
-                  Закрытая регистрация. Для восстановления пароля обратитесь к
-                  владельцу проекта.
-                </p>
+                <>
+                  <p className="hint">
+                    Закрытая регистрация. Для восстановления пароля обратитесь к
+                    владельцу проекта.
+                  </p>
+                  <button className="secondary" onClick={() => void logout()}>
+                    <LogOut size={16} /> Выйти из профиля
+                  </button>
+                </>
               )}
             </section>
             <section className="panel settings-panel">

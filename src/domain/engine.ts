@@ -80,6 +80,9 @@ export function makePlan(
   );
   const id = crypto.randomUUID(),
     items: Plan["items"] = [];
+  const minimum = Math.max(0, settings.budget - 1000);
+  const currentTotal = () =>
+    settings.transport + items.reduce((a, i) => a + i.place.price! * 2, 0);
   const add = (p: Place) => {
     const last = items.at(-1),
       travel = travelMinutes(last?.place ?? ORIGIN, p);
@@ -100,7 +103,9 @@ export function makePlan(
     return true;
   };
   if (settings.mode === "idea") {
-    for (const p of candidates) if (add(p)) break;
+    for (const p of candidates) {
+      if (settings.transport + p.price! * 2 >= minimum && add(p)) break;
+    }
   } else {
     // Choose a meal first: a full-day plan must include food in its actual estimate.
     const meals = candidates.filter((p) => p.category === "cafe");
@@ -108,36 +113,28 @@ export function makePlan(
     for (const anchor of activities) {
       items.length = 0;
       if (!add(anchor)) continue;
-      const meal = [...meals]
-        .sort((a, b) => travelMinutes(anchor, a) - travelMinutes(anchor, b))
-        .find(
-          (p) =>
-            travelMinutes(anchor, p) <= 45 &&
-            settings.transport + (anchor.price! + p.price!) * 2 <=
-              settings.budget &&
-            placeAt(
-              p,
-              items[0].end + travelMinutes(anchor, p),
-              settings.date,
-            ) !== null,
-        );
-      if (!meal) continue;
-      add(meal);
-      const remaining = activities
-        .filter((p) => p.id !== anchor.id)
-        .sort((a, b) => travelMinutes(meal, a) - travelMinutes(meal, b));
-      for (const p of remaining)
-        if (travelMinutes(meal, p) <= 45 && add(p)) break;
-      if (items.length >= 3) break;
+      for (const meal of meals) {
+        items.length = 1;
+        if (travelMinutes(anchor, meal) > 45 || !add(meal)) continue;
+        for (const activity of activities) {
+          if (activity.id === anchor.id || travelMinutes(meal, activity) > 45)
+            continue;
+          if (!add(activity)) continue;
+          if (currentTotal() >= minimum) break;
+          items.pop();
+        }
+        if (items.length >= 3 && currentTotal() >= minimum) break;
+      }
+      if (items.length >= 3 && currentTotal() >= minimum) break;
     }
     if (items.length < 3)
       throw new SelectionError(
-        "Не хватает мест для целого дня с едой в выбранных условиях. Попробуйте добавить категории, выбрать хорошую погоду или изменить бюджет.",
+        `Не удалось собрать день с едой на сумму от ${minimum} до ${settings.budget} ₽. Попробуйте изменить бюджет, категории, погоду или дату.`,
       );
   }
   if (!items.length)
     throw new SelectionError(
-      "Подходящих идей пока нет. Измените категории, бюджет или погодные условия.",
+      `Нет подходящей идеи стоимостью от ${minimum} до ${settings.budget} ₽ с учётом транспорта. Попробуйте изменить бюджет, категории или погоду.`,
     );
   const approximate =
     items.some(
@@ -198,6 +195,7 @@ export function replaceItem(
     if (
       start === null ||
       total > plan.budget ||
+      total < Math.max(0, plan.budget - 1000) ||
       (previous && travel > 45) ||
       (next && travelMinutes(p, next.place) > 45) ||
       (next && start + p.duration + travelMinutes(p, next.place) > next.start)
