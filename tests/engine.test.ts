@@ -151,6 +151,18 @@ describe("Plans respect constraints", () => {
     expect(cafes.size).toBeGreaterThanOrEqual(4);
     expect([...cafes].some((id) => !id.startsWith("grabli"))).toBe(true);
   });
+  it("offers an individual idea in each selectable budget band", () => {
+    for (const budget of [2000, 3000, 4000, 5000, 6000]) {
+      const plan = makePlan(
+        catalog,
+        { ...base, budget, mode: "idea" },
+        emptyData(),
+        rng(8),
+      );
+      expect(plan.total).toBeGreaterThanOrEqual(budget - 1000);
+      expect(plan.total).toBeLessThanOrEqual(budget);
+    }
+  });
   it("does not return blocked, prohibited, expired or unliked visited places", () => {
     const p = { ...catalog[0], price: 800, priceKind: "estimate" as const },
       plan = makePlan([p], { ...base, mode: "idea" }, emptyData());

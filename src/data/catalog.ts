@@ -415,6 +415,23 @@ export const catalog: Place[] = [
     sourceUrl: "https://moskvarium.ru/prices/",
   }),
   place({
+    id: "moscow-zoo",
+    title: "Прогулка в Московском зоопарке",
+    address: "Большая Грузинская улица, 1",
+    lat: 55.7604,
+    lon: 37.5772,
+    district: "Пресненский",
+    category: "active",
+    duration: 180,
+    open: 600,
+    close: 1080,
+    price: 2000,
+    priceKind: "estimate",
+    description:
+      "На билет заложен резерв 2000 ₽ на человека. Стоимость и сезонный режим работы проверьте на сайте зоопарка.",
+    sourceUrl: "https://moscowzoo.ru/",
+  }),
+  place({
     id: "dream-island",
     title: "Парк развлечений «Остров Мечты»",
     address: "проспект Андропова, 1",
